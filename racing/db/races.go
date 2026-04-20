@@ -18,7 +18,7 @@ type RacesRepo interface {
 	Init() error
 
 	// List will return a list of races.
-	List(filter *racing.ListRacesRequestFilter) ([]*racing.Race, error)
+	List(filter *racing.ListRacesRequestFilter, orderBy string) ([]*racing.Race, error)
 }
 
 type racesRepo struct {
@@ -43,7 +43,7 @@ func (r *racesRepo) Init() error {
 	return err
 }
 
-func (r *racesRepo) List(filter *racing.ListRacesRequestFilter) ([]*racing.Race, error) {
+func (r *racesRepo) List(filter *racing.ListRacesRequestFilter, orderBy string) ([]*racing.Race, error) {
 	var (
 		err   error
 		query string
@@ -53,6 +53,7 @@ func (r *racesRepo) List(filter *racing.ListRacesRequestFilter) ([]*racing.Race,
 	query = getRaceQueries()[racesList]
 
 	query, args = r.applyFilter(query, filter)
+	query, _ = r.applySort(query, orderBy)
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
@@ -90,6 +91,53 @@ func (r *racesRepo) applyFilter(query string, filter *racing.ListRacesRequestFil
 	}
 
 	return query, args
+}
+
+const (
+	fieldAdvertisedStartTime = "advertised_start_time"
+	fieldName                = "name"
+	fieldNumber              = "number"
+	fieldMeetingID           = "meeting_id"
+)
+
+// need to break the string like "advertised_start_time asc" into the field name and the order (asc/desc)
+// for now we only allow 1d sorting, so we can just split on the first space and take the first part as the field name and the second part as the order (if it exists)
+// basically default to sorting by advertised_start_time asc, or x asc where x is the field name without the direction
+// not bothering with validation, default fall through should be fine for demo
+// future would allow multiple sort fields, but for now we just want to demonstrate the concept of sorting and not get bogged down in the details of parsing a complex sort string
+func (r *racesRepo) applySort(query string, orderBy string) (string, []interface{}) {
+	// don't want an sql injection vulnerabilty
+	whitelist := map[string]bool{
+		fieldAdvertisedStartTime: true,
+		fieldName:                true,
+		fieldNumber:              true,
+		fieldMeetingID:           true,
+	}
+
+	if orderBy == "" {
+		query += " ORDER BY advertised_start_time ASC"
+		return query, nil
+	}
+
+	parts := strings.SplitN(orderBy, " ", 2)
+	fieldName := parts[0]
+
+	if !whitelist[fieldName] {
+		query += " ORDER BY advertised_start_time ASC"
+		return query, nil
+	}
+
+	order := "ASC"
+	if len(parts) > 1 {
+		order = strings.ToUpper(parts[1])
+		if order != "ASC" && order != "DESC" {
+			order = "ASC"
+		}
+	}
+
+	query += " ORDER BY " + fieldName + " " + order
+
+	return query, nil
 }
 
 func (m *racesRepo) scanRaces(
