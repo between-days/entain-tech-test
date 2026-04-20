@@ -51,6 +51,42 @@ func TestListRaces_FilterFlowsThroughLayers(t *testing.T) {
 	}
 }
 
+// test name desc, if that works, the rest probably do too
+// again, i'd be more thorough with unit tests in a real codebase, this is just covering the fundamental path sparingly
+func TestListRaces_SortByNameDescFlowsThroughLayers(t *testing.T) {
+	racingDb := setupTestDB(t)
+
+	repo := db.NewRacesRepo(racingDb)
+	if err := repo.Init(); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := service.NewRacingService(repo)
+
+	req := &racing.ListRacesRequest{
+		OrderBy: "name DESC",
+	}
+
+	resp, err := svc.ListRaces(context.Background(), req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(resp.Races) < 2 {
+		t.Fatalf("expected seeded data to have multiple races")
+	}
+
+	// verify ordering is descending by name
+	for i := 1; i < len(resp.Races); i++ {
+		prev := resp.Races[i-1].Name
+		curr := resp.Races[i].Name
+
+		if prev < curr {
+			t.Fatalf("expected DESC order, got %s before %s", prev, curr)
+		}
+	}
+}
+
 //
 // helpers
 //

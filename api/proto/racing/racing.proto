@@ -18,6 +18,8 @@ service Racing {
 // Request for ListRaces call.
 message ListRacesRequest {
   ListRacesRequestFilter filter = 1;
+  // Default: "advertised_start_time asc"
+  string order_by = 2;
 }
 
 // Response to ListRaces call.
