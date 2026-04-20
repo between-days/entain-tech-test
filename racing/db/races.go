@@ -17,6 +17,9 @@ type RacesRepo interface {
 	// Init will initialise our races repository.
 	Init() error
 
+	// Get will return a single race
+	Get(id int64) (*racing.Race, error)
+
 	// List will return a list of races.
 	List(filter *racing.ListRacesRequestFilter, orderBy string) ([]*racing.Race, error)
 }
@@ -41,6 +44,26 @@ func (r *racesRepo) Init() error {
 	})
 
 	return err
+}
+
+func (r *racesRepo) Get(id int64) (*racing.Race, error) {
+	row := r.db.QueryRow(`SELECT id, meeting_id, name, number, visible, advertised_start_time FROM races WHERE id = ?`, id)
+
+	var race racing.Race
+	var advertisedStart time.Time
+
+	if err := row.Scan(&race.Id, &race.MeetingId, &race.Name, &race.Number, &race.Visible, &advertisedStart); err != nil {
+		return nil, err
+	}
+
+	ts, err := ptypes.TimestampProto(advertisedStart)
+	if err != nil {
+		return nil, err
+	}
+
+	race.AdvertisedStartTime = ts
+
+	return &race, nil
 }
 
 func (r *racesRepo) List(filter *racing.ListRacesRequestFilter, orderBy string) ([]*racing.Race, error) {
