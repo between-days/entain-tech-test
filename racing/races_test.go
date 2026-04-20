@@ -20,6 +20,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+//
+// list races
+//
+
 func TestListRaces_FilterFlowsThroughLayers(t *testing.T) {
 	racingDb := setupTestDB(t)
 
@@ -84,6 +88,55 @@ func TestListRaces_SortByNameDescFlowsThroughLayers(t *testing.T) {
 		if prev < curr {
 			t.Fatalf("expected DESC order, got %s before %s", prev, curr)
 		}
+	}
+}
+
+//
+// get race
+//
+
+func TestGetRace_FlowsThroughLayers(t *testing.T) {
+	racingDb := setupTestDB(t)
+
+	repo := db.NewRacesRepo(racingDb)
+	if err := repo.Init(); err != nil {
+		t.Fatal(err)
+	}
+
+	// insert known test data (avoid seed reliance)
+	_, err := racingDb.Exec(`
+		INSERT INTO races(id, meeting_id, name, number, visible, advertised_start_time)
+		VALUES (123, 1, 'Test Race', 1, 1, datetime('now', '+1 day'))
+	`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	svc := service.NewRacingService(repo)
+
+	req := &racing.GetRaceRequest{
+		Id: 123,
+	}
+
+	resp, err := svc.GetRace(context.Background(), req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if resp.Race == nil {
+		t.Fatal("expected race, got nil")
+	}
+
+	if resp.Race.Id != 123 {
+		t.Fatalf("expected id 123, got %d", resp.Race.Id)
+	}
+
+	if resp.Race.Name != "Test Race" {
+		t.Fatalf("expected name 'Test Race', got %s", resp.Race.Name)
+	}
+
+	if resp.Race.Visible != true {
+		t.Fatalf("expected visible true")
 	}
 }
 
