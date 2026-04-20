@@ -114,3 +114,22 @@ go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway git
 - [Google API Design](https://cloud.google.com/apis/design)
 - [Go Modules](https://golang.org/ref/mod)
 - [Ubers Go Style Guide](https://github.com/uber-go/guide/blob/2910ce2e11d0e0cba2cece2c60ae45e3a984ffe5/style.md)
+
+### Comments
+
+- split gen differences into diff commits because having them alongside spec changes is annoying
+- gen changes in each pr so they can be tested individually
+
+for 5 I wasn't sure if a race should be considered an event. Because the task explicitly wants it as a seperate module my answer is just basically copy pasted code for racing chain with slightly different db. _If_ a race is to be considered an event there are several concerns to be clarified before starting work on that like:
+
+- how similar will the event types be
+- how complex is the functionality for each event type, is it just going to be boilerplate-y protoc stuff
+- how entrenched is the code, how core is it, what kind of downstream services depend on what features
+- what time budget are we working with
+- i'd want to get more familiar with large scale protoc repos
+
+My assumption would be you'd want to divide the events by type like racing, tennis, rugby etc and have dedicated pages with their own styling/layout. So having dedicated modules with a blanket events layer only really linking to each domains system. Especially considering how complex and specific betting engines are and how heavily stylised gambling UIs are.
+
+until those get addressed, considering how protoc style seems to favor duplication over coupling/mixing concerns and the explicit call for decoupling in the task, i leave things as decoupled as possible.
+
+In the case events just means tennis game, rugby game and doesn't include races the above still applies, just maybe to individual sport types within sports and to individual race types inside of races.
