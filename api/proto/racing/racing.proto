@@ -13,6 +13,15 @@ service Racing {
   }
 }
 
+/* Enums */
+
+// Derived vanity field for race open or closed. Unchecked added to prevent defaulting when mapping
+enum Status {
+  UNCHECKED=0;
+  CLOSED=1;
+  OPEN=2;
+}
+
 /* Requests/Responses */
 
 // Request for ListRaces call.
@@ -49,4 +58,6 @@ message Race {
   bool visible = 5;
   // AdvertisedStartTime is the time the race is advertised to run.
   google.protobuf.Timestamp advertised_start_time = 6;
+  // Derived vanity field for race open or closed
+  Status status = 7;
 }

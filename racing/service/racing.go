@@ -1,6 +1,8 @@
 package service
 
 import (
+	"time"
+
 	"git.neds.sh/matty/entain/racing/db"
 	"git.neds.sh/matty/entain/racing/proto/racing"
 	"golang.org/x/net/context"
@@ -27,5 +29,23 @@ func (s *racingService) ListRaces(ctx context.Context, in *racing.ListRacesReque
 		return nil, err
 	}
 
+	now := time.Now()
+
+	for _, r := range races {
+		enrichRace(r, now)
+	}
+
 	return &racing.ListRacesResponse{Races: races}, nil
+}
+
+// derive fields
+// for now just derive the status of the race
+func enrichRace(r *racing.Race, now time.Time) *racing.Race {
+	if now.Before(r.AdvertisedStartTime.AsTime()) {
+		r.Status = racing.Status_OPEN
+	} else {
+		r.Status = racing.Status_CLOSED
+	}
+
+	return r
 }
