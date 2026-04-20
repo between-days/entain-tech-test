@@ -11,7 +11,6 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // RacingClient is the client API for Racing service.
@@ -62,8 +61,8 @@ type UnsafeRacingServer interface {
 	mustEmbedUnimplementedRacingServer()
 }
 
-func RegisterRacingServer(s grpc.ServiceRegistrar, srv RacingServer) {
-	s.RegisterService(&Racing_ServiceDesc, srv)
+func RegisterRacingServer(s *grpc.Server, srv RacingServer) {
+	s.RegisterService(&_Racing_serviceDesc, srv)
 }
 
 func _Racing_ListRaces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -84,10 +83,7 @@ func _Racing_ListRaces_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-// Racing_ServiceDesc is the grpc.ServiceDesc for Racing service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var Racing_ServiceDesc = grpc.ServiceDesc{
+var _Racing_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "racing.Racing",
 	HandlerType: (*RacingServer)(nil),
 	Methods: []grpc.MethodDesc{
